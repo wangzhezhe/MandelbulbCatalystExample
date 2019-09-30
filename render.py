@@ -54,9 +54,9 @@ def CreateCoProcessor():
       renderView1.AxesGrid = 'GridAxes3DActor'
       renderView1.CenterOfRotation = [15.0, 14.5, 14.5]
       renderView1.StereoType = 0
-      renderView1.CameraPosition = [72.95737816914938, 57.59046756467926, 80.98540521015448]
-      renderView1.CameraFocalPoint = [15.00000000000003, 14.499999999999996, 14.499999999999991]
-      renderView1.CameraViewUp = [0.2735519444211961, 0.6806591859136356, -0.6796119527603748]
+      renderView1.CameraPosition = [82.50918702474546, 27.055001712840568, 84.65010181312223]
+      renderView1.CameraFocalPoint = [15.000000000000032, 14.499999999999973, 14.500000000000002]
+      renderView1.CameraViewUp = [0.43368553949011757, 0.7170357705971686, -0.5456890657886506]
       renderView1.CameraParallelScale = 25.406692031825003
       renderView1.Background = [0.32, 0.34, 0.43]
       renderView1.OSPRayMaterialLibrary = materialLibrary1
@@ -102,19 +102,9 @@ def CreateCoProcessor():
       # show data from contour1
       contour1Display = Show(contour1, renderView1)
 
-      # get color transfer function/color map for 'vtkBlockColors'
-      vtkBlockColorsLUT = GetColorTransferFunction('vtkBlockColors')
-      vtkBlockColorsLUT.InterpretValuesAsCategories = 1
-      vtkBlockColorsLUT.AnnotationsInitialized = 1
-      vtkBlockColorsLUT.Annotations = ['0', '0', '1', '1', '2', '2', '3', '3', '4', '4', '5', '5', '6', '6', '7', '7', '8', '8', '9', '9', '10', '10', '11', '11']
-      vtkBlockColorsLUT.ActiveAnnotatedValues = ['0']
-      vtkBlockColorsLUT.IndexedColors = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.6299992370489051, 0.6299992370489051, 1.0, 0.6699931334401464, 0.5000076295109483, 0.3300068665598535, 1.0, 0.5000076295109483, 0.7499961852445258, 0.5300068665598535, 0.3499961852445258, 0.7000076295109483, 1.0, 0.7499961852445258, 0.5000076295109483]
-      vtkBlockColorsLUT.IndexedOpacities = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
-
       # trace defaults for the display properties.
       contour1Display.Representation = 'Surface'
-      contour1Display.ColorArrayName = ['FIELD', 'vtkBlockColors']
-      contour1Display.LookupTable = vtkBlockColorsLUT
+      contour1Display.ColorArrayName = ['POINTS', '']
       contour1Display.OSPRayScaleArray = 'Normals'
       contour1Display.OSPRayScaleFunction = 'PiecewiseFunction'
       contour1Display.SelectOrientationVectors = 'None'
@@ -145,29 +135,6 @@ def CreateCoProcessor():
       contour1Display.PolarAxes.PolarAxisLabelFontFile = ''
       contour1Display.PolarAxes.LastRadialAxisTextFontFile = ''
       contour1Display.PolarAxes.SecondaryRadialAxesTextFontFile = ''
-
-      # setup the color legend parameters for each legend in this view
-
-      # get color legend/bar for vtkBlockColorsLUT in view renderView1
-      vtkBlockColorsLUTColorBar = GetScalarBar(vtkBlockColorsLUT, renderView1)
-      vtkBlockColorsLUTColorBar.Title = 'vtkBlockColors'
-      vtkBlockColorsLUTColorBar.ComponentTitle = ''
-      vtkBlockColorsLUTColorBar.TitleFontFile = ''
-      vtkBlockColorsLUTColorBar.LabelFontFile = ''
-
-      # set color bar visibility
-      vtkBlockColorsLUTColorBar.Visibility = 1
-
-      # show color legend
-      contour1Display.SetScalarBarVisibility(renderView1, True)
-
-      # ----------------------------------------------------------------
-      # setup color maps and opacity mapes used in the visualization
-      # note: the Get..() functions create a new object, if needed
-      # ----------------------------------------------------------------
-
-      # get opacity transfer function/opacity map for 'vtkBlockColors'
-      vtkBlockColorsPWF = GetOpacityTransferFunction('vtkBlockColors')
 
       # ----------------------------------------------------------------
       # finally, restore active source
