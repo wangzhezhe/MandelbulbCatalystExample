@@ -28,16 +28,11 @@ namespace
 
     void BuildVTKGrid(Mandelbulb& grid, int nprocs, int rank)
     {
+        int* extents = grid.GetExtents();
         vtkNew<vtkImageData> imageData;
-        imageData->SetSpacing(1, 1, 1);
+        imageData->SetSpacing(1.0/nprocs, 1, 1);
+        imageData->SetExtent(extents);
         imageData->SetOrigin(grid.GetOrigin()); // Not necessary for (0,0,0)
-        unsigned int* extents = grid.GetExtents();
-        int extents2[6];
-        for (int i = 0; i < 6; i++)
-        {
-            extents2[i] = static_cast<int>(extents[i]);
-        }
-        imageData->SetExtent(extents2);
         vtkNew<vtkMultiPieceDataSet> multiPiece;
         multiPiece->SetNumberOfPieces(nprocs);
         multiPiece->SetPiece(rank, imageData.GetPointer());

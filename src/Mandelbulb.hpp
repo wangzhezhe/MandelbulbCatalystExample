@@ -16,10 +16,7 @@ class Mandelbulb {
     };
 
     inline int& value_at(unsigned x, unsigned y, unsigned z) {
-        auto width  = m_coord_x.size();
-        auto height = m_coord_y.size();
-        auto depth  = m_coord_z.size();
-        return m_data[z + depth*(y + height*x)];
+        return m_data[z + m_depth*(y + m_height*x)];
     }
 
     static inline double do_r(const Vector& v)
@@ -69,29 +66,27 @@ class Mandelbulb {
             unsigned width,
             unsigned height,
             unsigned depth,
-            int z_offset,
+            double z_offset,
             float range=1.2,
             unsigned nprocs=1)
-    : m_coord_x(width)
-    , m_coord_y(height)
-    , m_coord_z(depth+1)
+    : m_width(width)
+    , m_height(height)
+    , m_depth(depth+1)
     , m_extents(6)
     , m_origin(3)
     , m_data(width*height*(depth+1))
     , m_z_offset(z_offset)
     , m_range(range)
     , m_nprocs(nprocs) {
-        for(int x = 0; x < width; x++)   m_coord_x[x] = (double)x;
-        for(int y = 0; y < height; y++)  m_coord_y[y] = (double)y;
-        for(int z = 0; z < depth; z++)   m_coord_z[z] = (double)(z+z_offset);
         m_extents[4] = 0;
-        m_extents[5] = m_coord_x.size()-1;
+        m_extents[5] = m_width-1;
         m_extents[2] = 0;
-        m_extents[3] = m_coord_y.size()-1;
-        m_extents[0] = z_offset;
-        m_extents[1] = z_offset + m_coord_z.size() - 1;
-        m_origin[1] = m_origin[2] = 0;
-        m_origin[0] = z_offset;
+        m_extents[3] = m_height-1;
+        m_extents[0] = 0;
+        m_extents[1] = m_depth-1;
+        m_origin[2] = 0;
+        m_origin[1] = 0;
+        m_origin[0] = z_offset/nprocs;
     }
 
     Mandelbulb(const Mandelbulb&)            = default;
@@ -101,17 +96,14 @@ class Mandelbulb {
     ~Mandelbulb()                            = default;
 
     void compute(double order, unsigned max_cycles=100) {
-        auto width  = m_coord_x.size();
-        auto height = m_coord_y.size();
-        auto depth  = m_coord_z.size();
-        for(unsigned z = 0; z < depth;  z++)
-        for(unsigned y = 0; y < height; y++)
-        for(unsigned x = 0; x < width;  x++)
+        for(unsigned z = 0; z < m_depth;  z++)
+        for(unsigned y = 0; y < m_height; y++)
+        for(unsigned x = 0; x < m_width;  x++)
         {
             Vector v = {
-                2.0*m_range*x/width - m_range,
-                2.0*m_range*y/height - m_range,
-                2.0*m_range*(z+m_z_offset)/((depth-1)*m_nprocs) - m_range
+                2.0*m_range*x/m_width - m_range,
+                2.0*m_range*y/m_height - m_range,
+                2.0*m_range*(m_z_offset+z)/((m_depth-1)*m_nprocs) - m_range
             };
             value_at(x,y,z) = iterate(v, order, max_cycles);
         }
@@ -122,51 +114,8 @@ class Mandelbulb {
         ofile.write((char*)m_data.data(), sizeof(int)*m_data.size());
     }
 
-#ifdef USE_HDF5
-    void writeHDF5(const std::string& filename) {
-        hid_t file, dataset, dataspace;
-        hsize_t dims[3];
-        herr_t status;
-
-        file = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-        if(file < 0) throw std::runtime_error("H5Fcreate failed");
-
-        dims[0] = m_coord_x.size();
-        dims[1] = m_coord_y.size();
-        dims[2] = m_coord_z.size();
-        dataspace = H5Screate_simple(3, dims, NULL);
-        dataset = H5Dcreate(file, "mandelbulb", H5T_NATIVE_INT, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        status = H5Dwrite(dataset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, m_data.data());
-        H5Sclose(dataspace);
-        H5Dclose(dataset);
-
-        dims[0] = m_coord_x.size();
-        dataspace = H5Screate_simple(1, dims, NULL);
-        dataset = H5Dcreate(file, "coord_x", H5T_NATIVE_DOUBLE, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        status = H5Dwrite(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, m_coord_x.data());
-        H5Sclose(dataspace);
-        H5Dclose(dataset);
-
-        dims[0] = m_coord_y.size();
-        dataspace = H5Screate_simple(1, dims, NULL);
-        dataset = H5Dcreate(file, "coord_y", H5T_NATIVE_DOUBLE, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        status = H5Dwrite(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, m_coord_y.data());
-        H5Sclose(dataspace);
-        H5Dclose(dataset);
-
-        dims[0] = m_coord_z.size();
-        dataspace = H5Screate_simple(1, dims, NULL);
-        dataset = H5Dcreate(file, "coord_z", H5T_NATIVE_DOUBLE, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        status = H5Dwrite(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, m_coord_z.data());
-        H5Sclose(dataspace);
-        H5Dclose(dataset);
-
-        H5Fclose(file);
-    }
-#endif
-
-    unsigned int* GetExtents() const {
-        return const_cast<unsigned int*>(m_extents.data());
+    int* GetExtents() const {
+        return const_cast<int*>(m_extents.data());
     }
 
     double* GetOrigin() const {
@@ -183,13 +132,13 @@ class Mandelbulb {
 
     private:
 
-    std::vector<double> m_coord_x;
-    std::vector<double> m_coord_y;
-    std::vector<double> m_coord_z;
-    std::vector<unsigned int> m_extents;
+    size_t              m_width;
+    size_t              m_height;
+    size_t              m_depth;
+    std::vector<int>    m_extents;
     std::vector<double> m_origin;
     std::vector<int>    m_data;
-    const int           m_z_offset;
+    const unsigned      m_z_offset;
     const float         m_range;
     const unsigned      m_nprocs;
 };
