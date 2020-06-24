@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.3)
+cmake_minimum_required(VERSION 3.14)
 project(Mandelbulb CXX C)
-
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -luuid")
 enable_language(CXX)
 find_package(ParaView 5.7 REQUIRED COMPONENTS Catalyst PythonCatalyst)
 if(NOT PARAVIEW_USE_MPI)
